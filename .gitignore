@@ -1,6 +1,6 @@
 *.o
 create_dbases/test.db
-rdexec
+jexec
 sqlite_examples/insert
 sqlite_examples/parameterized
 sqlite_examples/test.db

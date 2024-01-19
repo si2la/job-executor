@@ -1,17 +1,17 @@
-# JOBEXECUTOR (JEXECUTOR)
+# JOB EXECUTOR (JEXECUTOR)
 
-##ru
+## ru
 Проект - реализация некоторых задумок на тему: выполнения задач автоматизации по определенному расписанию (сценариям).
 Проектировалось как ПО для контроллера Умного дома. Однако, хочется сделать что-то универсальное для задач автоматики.
 Поддержка протоколов: Modbus, MQTT.
 
-###Главные задачи: 
+### Главные задачи: 
 - грамотное внедрение однократно исполняемых событий (не сценариев),
 - отладка работы по MQTT-протоколу,
 - увеличение быстродействия системы,
 - выполнение программы на любом оборудовании (в том числе на микрокомпьютерах).
 
-###Установка:
+### Установка:
 - требуются следующие инструменты:
   - SQLite,
   - gcc, make,
@@ -29,18 +29,18 @@ sudo apt install -y redis libhiredis-dev
 ```
 На встраиваемую систему, это можно сделать из исходников, например.
 
-##en
+## en
 The project is the implementation of some ideas on the topic: performing automation tasks according to a specific schedule (scenarios).
 Designed as software for a Smart Home controller to make sheduled tasks. However, I would like to make something universal for automation tasks.
 Protocol support: Modbus, MQTT.
 
-###Main tasks:
+### Main tasks:
 - competent implementation of one-time executed events (not scenarios),
 - debugging work using the MQTT protocol,
 - increasing system speed,
 - execution of the program on any equipment (including on microcomputers).
 
-###Installation:
+### Installation:
 - the following tools are required:
    - SQLite,
    - gcc, make,
