@@ -7,3 +7,4 @@ sqlite_examples/test.db
 test.db
 sqlite3_analyzer
 sqlite3.*
+tags

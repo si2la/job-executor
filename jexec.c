@@ -11,6 +11,8 @@
 #include <errno.h>
 //#include <hiredis.h>
 #include "hiredis/hiredis.h"
+// debian variant
+//#include <hiredis/hiredis.h>
 #include <fcntl.h>
 
 //TODO  move interpeter code to interpreter.c
@@ -39,6 +41,9 @@
 #define MAIN_LOOP_DELAY 1000000
 #define DEFAULT_IP_ADDR "192.168.0.71\n"
 #define DEFAULT_IP_MASK "255.255.255.0\n"
+#define JEXEC_DB_FILE   "test.db"
+#define WEBAP_DB_FILE   "/home/si/work/leo_express_app/db.sqlite"
+#define MB_RTU_EXE      "/home/si/work/mbrtuexe/rdmbrtuexe"
 
 // GLOBAL
 // database context
@@ -1099,7 +1104,8 @@ int get_sensor_data (int conn_chann_id) {
     //          now modbus
     if ( strcmp( sqlite3_column_text(res,0), "MODBUS_RTU" ) == 0 ) {
         char buf1[100];
-        strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
+        //strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
+        strcpy(buf1, MB_RTU_EXE);
         //strcat(buf1, "");
 
         int status = system(buf1);
@@ -1464,7 +1470,8 @@ int set_actuator (int conn_chann_id, int value) {
     //          and do work !!!
     if ( strcmp( sqlite3_column_text(res,0), "MODBUS_RTU" ) == 0 ) {
         char buf1[100];
-        strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
+        //strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
+        strcpy(buf1, MB_RTU_EXE);
         //strcat(buf1, "");
 
         int status = system(buf1);
@@ -3216,7 +3223,9 @@ int main(int argc, char **argv) {
 
     //          sqlite initialization 
     //          for scenarios dbase
-    rc = sqlite3_open("/home/root/leo/executor/test.db", &db);
+    //rc = sqlite3_open("/home/si/work/jexecutor/test.db", &db);
+    rc = sqlite3_open(JEXEC_DB_FILE, &db);
+    fprintf(stdout, "%stry to open scenario db %s\n",THIS_FILE, JEXEC_DB_FILE);
 
     if (rc != SQLITE_OK) {
 
@@ -3241,16 +3250,6 @@ int main(int argc, char **argv) {
     //
     //          try to attach
     //          web dbase
-    sql = "ATTACH '/home/root/leo/nodejs/express-example/db.sqlite' AS db_web;";
-    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
-
-    if (rc != SQLITE_OK ) {
-
-        fprintf(stderr, "SQL error: %s\n", err_msg);
-
-        sqlite3_free(err_msg);
-        return 1;
-    } else    fprintf(stdout, "%sweb db attached successfully!\n", THIS_FILE);
 
     //          now it's time to synchronize SAP tables
     //
@@ -3289,6 +3288,22 @@ int main(int argc, char **argv) {
         return 1;
     } else    fprintf(stdout, "%sParameters table is cleared successfully!\n", THIS_FILE);
 
+   
+    //sql = "ATTACH '/home/si/work/leo_express_app/db.sqlite' AS db_web;";
+    sql = "ATTACH '"WEBAP_DB_FILE"' AS db_web;";
+    fprintf(stdout, "%s\n", sql);
+    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+
+    if (rc != SQLITE_OK ) {
+
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+
+        sqlite3_free(err_msg);
+        return 1;
+    } else    fprintf(stdout, "%sweb db attached successfully!\n", THIS_FILE);
+   
+
+
         sql = "SELECT id, name from db_web.Scenarios;";
 
         rc = sqlite3_prepare_v2(db, sql, -1, &res, 0);
@@ -3321,7 +3336,7 @@ int main(int argc, char **argv) {
     reset_prev_uicontrol_states();
 
     print_time();
-    fprintf(stdout, "%s%sLEO main loop executor STARTED!!!\n", THIS_FILE, VER);
+    fprintf(stdout, "%s%s main loop executor STARTED!!!\n", THIS_FILE, VER);
 
     //log_time = malloc(sizeof(char)*30);
     //get_time(log_time);
@@ -3331,7 +3346,7 @@ int main(int argc, char **argv) {
     //free(log_time);
 
     log_msg = malloc(50*sizeof(char));
-    sprintf(log_msg, "%sLEO main loop executor STARTED!!!", VER);
+    sprintf(log_msg, "%s main loop executor STARTED!!!", VER);
     logger(log_msg);
     free(log_msg);
 
@@ -3393,6 +3408,7 @@ int main(int argc, char **argv) {
             printf("%s|", sqlite3_column_text(res, 2));
             printf("%s\n", sqlite3_column_text(res, 3));
 
+            //TODO replace puts!!!
             puts("===============================================================");
 
             //  handle actions for this scenario if day of Week is worked day
