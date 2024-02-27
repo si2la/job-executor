@@ -1,14 +1,15 @@
 # JOB EXECUTOR (JEXECUTOR)
 
 ## ru
-Проект - реализация некоторых задумок на тему: выполнения задач автоматизации по определенному расписанию (сценариям).
-Проектировалось как ПО для контроллера Умного дома. Однако, хочется сделать что-то универсальное для задач автоматики.
-Поддержка протоколов: Modbus, MQTT.
+Проект - реализация задумок на тему: выполнения задач автоматизации по определенному расписанию (сценариям).
+Проектировалось как часть ПО для контроллера Умного дома. Однако, нужно сделать что-то универсальное для задач автоматики.
+Пока поддержка протоколов: Modbus, MQTT.
 
-### Главные задачи: 
-- грамотное внедрение однократно исполняемых событий (не сценариев),
+### Главные задачи:
+- внедрение очереди однократно-исполняемых событий (не сценариев), на подобие пула сценариев,
+  (пока есть возможность нормально обработать только единственное однократно-исполняемое событие)
 - отладка работы по MQTT-протоколу,
-- увеличение быстродействия системы,
+- увеличение быстродействия,
 - выполнение программы на любом оборудовании (в том числе на микрокомпьютерах).
 
 ### Установка:
@@ -32,12 +33,12 @@ sudo apt install -y redis libhiredis-dev
 ## en
 The project is the implementation of some ideas on the topic: performing automation tasks according to a specific schedule (scenarios).
 Designed as software for a Smart Home controller to make sheduled tasks. However, I would like to make something universal for automation tasks.
-Protocol support: Modbus, MQTT.
+Protocol support for now: Modbus, MQTT.
 
 ### Main tasks:
 - competent implementation of one-time executed events (not scenarios),
 - debugging work using the MQTT protocol,
-- increasing system speed,
+- increasing speed,
 - execution of the program on any equipment (including on microcomputers).
 
 ### Installation:
