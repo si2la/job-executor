@@ -10,9 +10,9 @@
 #include <signal.h>
 #include <errno.h>
 //#include <hiredis.h>
-#include "hiredis/hiredis.h"
+//include "hiredis/hiredis.h"
 // debian variant
-//#include <hiredis/hiredis.h>
+#include <hiredis/hiredis.h>
 #include <fcntl.h>
 
 //TODO  move interpeter code to interpreter.c
@@ -3212,14 +3212,31 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-        //      now del redis keys user_page_controls_set
-        //
+    //      now del redis keys user_page_controls_set
+    //
 
-        reply = redisCommand(c,"DEL user_page_controls_set");
+    reply = redisCommand(c,"DEL user_page_controls_set");
+    if (NEED_FULL_LOG) print_time();
+    if (NEED_FULL_LOG) fprintf(stdout, "%sDEL user_page_controls_set is %s\n", THIS_FILE, reply->str);
+
+    freeReplyObject(reply);
+
+    //      now set redis keys once_exec_action_needed to 0
+    //      against bug#018 - random "1" in the redis key once_exec_action_needed
+
+    reply = redisCommand(c,"SET once_exec_action_needed 0");
+
+    if ( reply == NULL || reply->type == REDIS_REPLY_NIL || reply->type == REDIS_REPLY_ERROR ) {
+        // TODO error log
         if (NEED_FULL_LOG) print_time();
-        if (NEED_FULL_LOG) fprintf(stdout, "%sDEL user_page_controls_set is %s\n", THIS_FILE, reply->str);
+        if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in SET once_exec_action_needed!\n", THIS_FILE);
 
-        freeReplyObject(reply);
+    } else {
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%stry to SET once_exec_action_needed 0 - %s!\n", THIS_FILE, reply->str);
+    }
+
+    freeReplyObject(reply);
 
     //          sqlite initialization 
     //          for scenarios dbase
