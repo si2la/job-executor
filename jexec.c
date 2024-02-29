@@ -3149,6 +3149,28 @@ void exit_program(int sig) {
     exit(0); 
 }
 
+int set_redis_key(const char * rcmd) {
+
+    int ret_val = -1;
+    redisReply * reply;
+    reply = redisCommand(c, rcmd);
+
+    if ( reply == NULL || reply->type == REDIS_REPLY_NIL || reply->type == REDIS_REPLY_ERROR ) {
+        // TODO error log
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in %s!\n", THIS_FILE, rcmd);
+
+    } else {
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%stry to %s - %s!\n", THIS_FILE, rcmd, reply->str);
+        ret_val = 0;
+    }
+
+    freeReplyObject(reply);
+
+    return ret_val;
+}
+
 int main(int argc, char **argv) {
 
     //sqlite3 *db;
@@ -3224,19 +3246,8 @@ int main(int argc, char **argv) {
     //      now set redis keys once_exec_action_needed to 0
     //      against bug#018 - random "1" in the redis key once_exec_action_needed
 
-    reply = redisCommand(c,"SET once_exec_action_needed 0");
+    set_redis_key("SET once_exec_action_needed 0");
 
-    if ( reply == NULL || reply->type == REDIS_REPLY_NIL || reply->type == REDIS_REPLY_ERROR ) {
-        // TODO error log
-        if (NEED_FULL_LOG) print_time();
-        if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in SET once_exec_action_needed!\n", THIS_FILE);
-
-    } else {
-        if (NEED_FULL_LOG) print_time();
-        if (NEED_FULL_LOG) fprintf(stdout, "%stry to SET once_exec_action_needed 0 - %s!\n", THIS_FILE, reply->str);
-    }
-
-    freeReplyObject(reply);
 
     //          sqlite initialization 
     //          for scenarios dbase
