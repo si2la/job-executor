@@ -3566,10 +3566,8 @@ int main(int argc, char **argv) {
             reset_prev_uicontrol_states();
         }
 
-        //  now we wait event from web interface
-        redisCommand(c, "SET reread_uicontrols_list 0");
-        if (NEED_FULL_LOG) print_time();
-        if (NEED_FULL_LOG) fprintf(stdout, "%sSET reread_uicontrols_list 0\n", THIS_FILE);
+        //  now we wait events from web interface
+        set_redis_key("SET reread_uicontrols_list 0");
 
         // get a REDIS list items with ccId data for UI
         //reply = redisCommand(c, "LRANGE user_page_controls_in_check 0 -1");
