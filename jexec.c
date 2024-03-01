@@ -3219,6 +3219,7 @@ int main(int argc, char **argv) {
 
     //          redis initialization 
     //
+    char * redis_cmd;
     const char *hostname = "127.0.0.1";
     int port = 6379;
 
@@ -3640,13 +3641,12 @@ int main(int argc, char **argv) {
                         fprintf(stdout,"%sGET ccprevstate_%d error\n", THIS_FILE, connchann);
                         //break;
                         freeReplyObject(reply2);
-                        reply2 = redisCommand(c, "SET ccprevstate_%d %s", connchann, "unknown");
-                        if ( reply2 == NULL || reply2->type == REDIS_REPLY_NIL || reply2->type == REDIS_REPLY_ERROR ) {
-                            // TODO error log
-                            if (NEED_FULL_LOG) print_time();
-                            if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in SET ccprevstate_%d\n", THIS_FILE, connchann);
-                        }
-                        freeReplyObject(reply2);
+
+                        redis_cmd = malloc(sizeof(char)*30);
+                        sprintf(redis_cmd, "SET ccprevstate_%d %s", connchann, "unknown");
+                        set_redis_key(redis_cmd);
+                        free(redis_cmd);
+
                         //  try once again
                         reply2 = redisCommand(c, "GET ccprevstate_%d", connchann);
                         if (NEED_FULL_LOG) print_time();
@@ -3691,17 +3691,10 @@ int main(int argc, char **argv) {
         //
         ui_wdog_counter--;
 
-        reply = redisCommand(c, "SET user_page_alive %d", ui_wdog_counter);
-        if ( reply == NULL || reply->type == REDIS_REPLY_NIL || reply->type == REDIS_REPLY_ERROR ) {
-            // TODO error log
-            if (NEED_FULL_LOG) print_time();
-            if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in SET user_page_alive!\n", THIS_FILE);
-
-        } else {
-            if (NEED_FULL_LOG) print_time();
-            if (NEED_FULL_LOG) fprintf(stdout, "%stry to SET user_page_alive %d - %s!\n", THIS_FILE, ui_wdog_counter, reply->str);
-        }
-        freeReplyObject(reply);
+        redis_cmd = malloc(sizeof(char)*30);
+        sprintf(redis_cmd, "SET user_page_alive %d", ui_wdog_counter);
+        set_redis_key(redis_cmd);
+        free(redis_cmd);
 
 UiWdogDone:
         //      now we looking for rdexe_activate_scenario key
