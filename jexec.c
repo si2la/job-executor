@@ -3647,7 +3647,7 @@ int main(int argc, char **argv) {
                         set_redis_key(redis_cmd);
                         free(redis_cmd);
 
-                        //  try once again
+                        //  try to get once again, after set key to "unknown"
                         reply2 = redisCommand(c, "GET ccprevstate_%d", connchann);
                         if (NEED_FULL_LOG) print_time();
                         if (NEED_FULL_LOG) fprintf(stdout, "%sGET ccprevstate_%d is %s\n", THIS_FILE, connchann, reply2->str);
@@ -3796,18 +3796,8 @@ UiWdogDone:
 
         if (delete_scenario_id) {
             if (delete_scenario(delete_scenario_id) ) {
-                // replace key with no scenario id
-                reply = redisCommand(c, "SET rdexe_delete_scenario %d", 0);
-                if ( reply == NULL || reply->type == REDIS_REPLY_NIL || reply->type == REDIS_REPLY_ERROR ) {
-                    // TODO error log
-                    if (NEED_FULL_LOG) print_time();
-                    if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in SET rdexe_delete_scenario!\n", THIS_FILE);
-
-                } else {
-                    if (NEED_FULL_LOG) print_time();
-                    if (NEED_FULL_LOG) fprintf(stdout, "%sSET rdexe_delete_scenario redis key to 0 - %s!\n", THIS_FILE, reply->str);
-                }
-                freeReplyObject(reply);
+                // replace key with no scenario id to delete
+                set_redis_key("SET rdexe_delete_scenario 0");
             }
         }
 
@@ -3817,18 +3807,14 @@ UiWdogDone:
         //          take a fin time of main loop
         fin_main_cycle_time = ltime();
 
-        // time of main loop
+        // time of main loop - for monitoring and check control
         main_cycle_time = fin_main_cycle_time - start_main_cycle_time;
         if ( main_cycle_time == 0 ) main_cycle_time = 1;
 
-        reply = redisCommand(c, "SET rdexe_main_cycle_time %d", main_cycle_time);
-        if ( reply == NULL || reply->type == REDIS_REPLY_NIL || reply->type == REDIS_REPLY_ERROR ) {
-            // TODO error log
-            if (NEED_FULL_LOG) print_time();
-            if (NEED_FULL_LOG) fprintf(stdout, "%sredis error in SET rdexe_main_cycle_time!\n", THIS_FILE);
-
-        }
-        freeReplyObject(reply);
+        redis_cmd = malloc(sizeof(char)*30);
+        sprintf(redis_cmd, "SET jexec_main_cycle_time %d", main_cycle_time);
+        set_redis_key(redis_cmd);
+        free(redis_cmd);
 
         //      it's time to sleep main loop now
 EndExeLoop:
