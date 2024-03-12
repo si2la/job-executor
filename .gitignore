@@ -8,3 +8,4 @@ test.db
 sqlite3_analyzer
 sqlite3.*
 tags
+helpers/rqueue
