@@ -6,7 +6,9 @@
 
 #include <hiredis.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 #define NEED_FULL_LOG 1
 #define THIS_FILE "rqueue "
@@ -50,6 +52,8 @@ int main() {
         exit(1);
     }
 
+    char *cc_token, *cc_rest;
+
     do {
         //work
         reply = redisCommand(c,"RPOP once_exec_connchannels");
@@ -58,9 +62,16 @@ int main() {
         if (NEED_FULL_LOG) fprintf(stdout, "%sRPOP once_exec_connchannels is %s\n", THIS_FILE, reply->str);
 
         if ( reply->type != REDIS_REPLY_NIL ) {
-            //
+            strcpy(cc_rest, reply->str);
+
             if (NEED_FULL_LOG) print_time();
             if (NEED_FULL_LOG) fprintf(stdout, "make job...\n");
+
+            cc_token =strtok_r(cc_rest, ":", &cc_rest);
+            printf("cc_id = %ld\n", atol(cc_token));
+
+            cc_token =strtok_r(cc_rest, ":", &cc_rest);
+            printf("cc_val = %ld\n", atol(cc_token));
         }
     } while (reply->type != REDIS_REPLY_NIL);
 
