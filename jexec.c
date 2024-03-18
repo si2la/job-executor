@@ -3687,28 +3687,28 @@ int main(int argc, char **argv) {
             if (NEED_FULL_LOG) fprintf(stdout, "%sRPOP once_exec_connchannels is %s\n", THIS_FILE, reply->str);
 
             if ( reply->type != REDIS_REPLY_NIL ) {
-                char *cc_token;
-                cc_token = malloc(sizeof(char) * 10);
-                char *cc_string_rest;
-                cc_string_rest = malloc(sizeof(char) * 20);
+                // https://stackoverflow.com/questions/66180466/invalid-pointer-when-using-strtok-r
+                char* cc_token;
+                //cc_token = malloc(sizeof(char) * 10);
+                char* cc_string = malloc(sizeof(char) * 20);
+                strcpy(cc_string, reply->str);
+                char* cc_rest = cc_string;
 
-                strcpy(cc_string_rest, reply->str);
-
-                cc_token = strtok_r(cc_string_rest, ":", &cc_string_rest);
+                cc_token = strtok_r(cc_rest, ":", &cc_rest);
                 cc_once_id = atol(cc_token);
 
-                //cc_token = strtok_r(cc_string_rest, ":", &cc_string_rest);
-                //cc_once_val = atoi(cc_token);
-                cc_once_val = atoi(cc_string_rest);
+                cc_token = strtok_r(cc_rest, ":", &cc_rest);
+                cc_once_val = atoi(cc_token);
+                //cc_once_val = atoi(cc_rest);
 
-                // free(cc_string_rest) - runtime error on freeing - wrong pointer
-                free(cc_token);
+                free(cc_string); //- runtime error on freeing - wrong pointer
+                //free(cc_token);
 
                 db_act_once_add_and_exec(cc_once_id, cc_once_val);
             }
         //} while (reply->type != REDIS_REPLY_NIL);
-
-        freeReplyObject(reply);
+	//
+	freeReplyObject(reply);
 
         //      now see redis list user_page_control_in_check
         //      to track sensor in active user page
