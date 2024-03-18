@@ -52,7 +52,15 @@ int main() {
         exit(1);
     }
 
-    char *cc_token, *cc_rest;
+    char *cc_token;
+    cc_token = malloc(sizeof(char) * 10);
+
+    char *cc_string_rest;
+    cc_string_rest = malloc(sizeof(char) * 20);
+
+    char *err;
+    long cc_once_id;
+    int cc_once_val;
 
     do {
         //work
@@ -62,17 +70,22 @@ int main() {
         if (NEED_FULL_LOG) fprintf(stdout, "%sRPOP once_exec_connchannels is %s\n", THIS_FILE, reply->str);
 
         if ( reply->type != REDIS_REPLY_NIL ) {
-            strcpy(cc_rest, reply->str);
+            strcpy(cc_string_rest, reply->str);
 
             if (NEED_FULL_LOG) print_time();
             if (NEED_FULL_LOG) fprintf(stdout, "make job...\n");
 
-            cc_token =strtok_r(cc_rest, ":", &cc_rest);
-            printf("cc_id = %ld\n", atol(cc_token));
+            cc_token =strtok_r(cc_string_rest, ":", &cc_string_rest);
+            //cc_once_id = (long)strtol(cc_token, &err, 10);
+            cc_once_id = atol(cc_token);
+            printf("cc_id = %ld\n", cc_once_id);
 
-            cc_token =strtok_r(cc_rest, ":", &cc_rest);
-            printf("cc_val = %ld\n", atol(cc_token));
+            cc_token =strtok_r(cc_string_rest, ":", &cc_string_rest);
+            cc_once_val = atoi(cc_token);
+            printf("cc_val = %d\n", cc_once_val);
+
         }
     } while (reply->type != REDIS_REPLY_NIL);
+
 
 }

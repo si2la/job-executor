@@ -25,7 +25,7 @@
 #define VER "#v0.05# "
 #define THIS_FILE "jexe "
 //TODO make define handler in NEED_FULL_LOG
-#define NEED_FULL_LOG 1
+#define NEED_FULL_LOG 0
 #define MAX_DEL_RECORDS  100
 #define MAX_SCENARIO_ACTIONS 100
 #define MAX_UICONTROLS_IN_USERPAGE 2048 
@@ -38,7 +38,7 @@
 #define DAY  86400
 #define WEEK 604800
 #define MONTH 86400*30
-#define MAIN_LOOP_DELAY 1000000
+#define MAIN_LOOP_DELAY 100000
 #define DEFAULT_IP_ADDR "192.168.0.71\n"
 #define DEFAULT_IP_MASK "255.255.255.0\n"
 #define JEXEC_DB_FILE   "test.db"
@@ -964,6 +964,129 @@ ActOnceAddDone:
    return; 
 }
 
+//          Add once executed operation to Scenarios, Actions, Parameters tables with parameters
+//          no returned value (void)
+//
+void db_act_once_add_and_exec (long connchannel_id, int val) {
+    char *err_msg = 0;
+    char *err;
+    sqlite3_stmt *res;
+    char *sql;
+    long scenario_id, action_id;
+    //int ret_val;
+    int step;
+    redisReply *reply;
+
+    if (NEED_FULL_LOG) print_time();
+    if (NEED_FULL_LOG) fprintf(stdout, "%sStart to add once exec actions!\n", THIS_FILE);
+
+    //      prepare query for write to Scenarios table
+    //
+    sql = "INSERT INTO Scenarios VALUES(NULL, 'Action once', 0, 1, 1, '0-1-2-3-4-5-6', 0);";
+    rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
+
+    if (rc != SQLITE_OK ) {
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+        sqlite3_free(err_msg);
+        goto ActOnceAddDone;
+    }
+
+    scenario_id = (long)sqlite3_last_insert_rowid(db);
+
+    //      prepare query for write to Actions table
+    //
+    sql = "INSERT INTO Actions VALUES(NULL, ?, '', 1, 1, 12);";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &res, 0);
+
+    if (rc == SQLITE_OK) {
+    //      it's parameterized query
+        sqlite3_bind_int(res, 1, scenario_id);
+    } else {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+        delete_scenario(scenario_id);
+        goto ActOnceAddDone;
+    }
+
+    step = sqlite3_step(res);
+    if (step == SQLITE_DONE) {
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sInsert into Actions table - OK!\n", THIS_FILE);
+
+        action_id = (long)sqlite3_last_insert_rowid(db);
+
+    } else {
+        fprintf(stdout, "%sInsert into Actions table is NOT OK!\n", THIS_FILE);
+        goto ActOnceAddDone;
+    }
+
+    sqlite3_finalize(res);
+
+    //      prepare query for write to Parameters table
+    //      TODO add field names for more understanding 
+    //      for parameter 1
+    sql = "INSERT INTO Parameters VALUES(NULL, ?, 1, '', 'Actuator', NULL, ?, '', '', 0, ?);";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &res, 0);
+
+    if (rc == SQLITE_OK) {
+    //      it's parameterized query
+        sqlite3_bind_int(res, 1, action_id);
+        sqlite3_bind_int(res, 2, connchannel_id);
+        sqlite3_bind_int(res, 3, scenario_id);
+    } else {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+        delete_scenario(scenario_id);
+        goto ActOnceAddDone;
+    }
+
+    step = sqlite3_step(res);
+    if (step == SQLITE_DONE) {
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sInsert P1 into Parameters table - OK!\n", THIS_FILE);
+    } else {
+        fprintf(stdout, "%sInsert P1 into Parameters table is NOT OK!\n", THIS_FILE);
+        goto ActOnceAddDone;
+    }
+
+    sqlite3_finalize(res);
+ 
+    //      prepare query for write to Parameters table
+    //      for parameter 2
+    sql = "INSERT INTO Parameters VALUES(NULL, ?, 2, '', 'Constant', ?, NULL, '', '', 0, ?);";
+
+    rc = sqlite3_prepare_v2(db, sql, -1, &res, 0);
+
+    if (rc == SQLITE_OK) {
+    //      it's parameterized query
+        sqlite3_bind_int(res, 1, action_id);
+        sqlite3_bind_int(res, 2, val);
+        sqlite3_bind_int(res, 3, scenario_id);
+    } else {
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(db));
+        delete_scenario(scenario_id);
+        goto ActOnceAddDone;
+    }
+
+    step = sqlite3_step(res);
+    if (step == SQLITE_DONE) {
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sInsert P2 into Parameters table - OK!\n", THIS_FILE);
+    } else {
+        fprintf(stdout, "%sInsert P2 into Parameters table is NOT OK!\n", THIS_FILE);
+        goto ActOnceAddDone;
+    }
+
+    sqlite3_finalize(res);
+
+    //  now make action yet
+    actions_handler(scenario_id);
+
+ActOnceAddDone:
+   return; 
+}
+
 //          function returned value from sensor
 //          returned value -1  - error
 //          now, value of sensor storied in redis key "ccstate_N"
@@ -1115,6 +1238,7 @@ int get_sensor_data (int conn_chann_id) {
         // if error occured
         if(status != 0) return -1;
 
+        //printf("get_sensor: crashed here ..\n");
         //            waiting modbus command execution
         //usleep(10);
 
@@ -1481,6 +1605,7 @@ int set_actuator (int conn_chann_id, int value) {
         // if error occured
         if(status != 0) return -1; 
 
+        //printf("set_actuator: crashed here ..\n");
         //      waiting command execution
         //usleep(50);
         //      executor returned data handler
@@ -3200,6 +3325,14 @@ int main(int argc, char **argv) {
     redisReply *reply, *reply1, *reply2;
     char *err;
 
+    //          for splitting redis LIST into tokens
+    //char *cc_token;
+    //cc_token = malloc(sizeof(char) * 10);
+    //char *cc_string_rest;
+    //cc_string_rest = malloc(sizeof(char) * 20);
+    long cc_once_id;
+    int cc_once_val;
+
     //          fill the array of delete scenario records by 0
     //
     fill_del_scen_rec_zeros();
@@ -3447,6 +3580,8 @@ int main(int argc, char **argv) {
             strcpy(buf, "8");
             get_week_day(buf);
             if ( strstr(sqlite3_column_text(res, 3), buf) != NULL )  actions_handler(scen_id);
+            // freeing memory
+            free(buf);
 
             puts("===============================================================");
 
@@ -3504,9 +3639,9 @@ int main(int argc, char **argv) {
         }
 
         //      now see redis keys for add new scenarios records
-        //      with once execution option
+        //      with once execution option - old variant
         //
-
+/*
         reply = redisCommand(c,"GET once_exec_action_needed");
         if (NEED_FULL_LOG) print_time();
         if (NEED_FULL_LOG) fprintf(stdout, "%sGET once_exec_action_needed is %s\n", THIS_FILE, reply->str);
@@ -3526,6 +3661,36 @@ int main(int argc, char **argv) {
             //  of once execute action
             goto EndExeLoop;
         }
+*/
+        //     new: once executed action with Redis LIST
+
+        //do {
+            reply = redisCommand(c,"RPOP once_exec_connchannels");
+
+            if (NEED_FULL_LOG) print_time();
+            if (NEED_FULL_LOG) fprintf(stdout, "%sRPOP once_exec_connchannels is %s\n", THIS_FILE, reply->str);
+
+            if ( reply->type != REDIS_REPLY_NIL ) {
+                char *cc_token;
+                cc_token = malloc(sizeof(char) * 10);
+                char *cc_string_rest;
+                cc_string_rest = malloc(sizeof(char) * 20);
+
+                strcpy(cc_string_rest, reply->str);
+
+                cc_token = strtok_r(cc_string_rest, ":", &cc_string_rest);
+                cc_once_id = atol(cc_token);
+
+                //cc_token = strtok_r(cc_string_rest, ":", &cc_string_rest);
+                //cc_once_val = atoi(cc_token);
+                cc_once_val = atoi(cc_string_rest);
+
+                // free(cc_string_rest) - runtime error on freeing - wrong pointer
+                free(cc_token);
+
+                db_act_once_add_and_exec(cc_once_id, cc_once_val);
+            }
+        //} while (reply->type != REDIS_REPLY_NIL);
 
         //      now see redis list user_page_control_in_check
         //      to track sensor in active user page
@@ -3812,7 +3977,7 @@ UiWdogDone:
         if ( main_cycle_time == 0 ) main_cycle_time = 1;
 
         redis_cmd = malloc(sizeof(char)*30);
-        sprintf(redis_cmd, "SET jexec_main_cycle_time %d", main_cycle_time);
+        sprintf(redis_cmd, "SET jexec_main_cycle_time %ld", main_cycle_time);
         set_redis_key(redis_cmd);
         free(redis_cmd);
 
