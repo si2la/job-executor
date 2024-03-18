@@ -3708,6 +3708,8 @@ int main(int argc, char **argv) {
             }
         //} while (reply->type != REDIS_REPLY_NIL);
 
+        freeReplyObject(reply);
+
         //      now see redis list user_page_control_in_check
         //      to track sensor in active user page
         //
