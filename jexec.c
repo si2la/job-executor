@@ -84,6 +84,16 @@ int sensor_state_is_need_to_check[MAX_CONN_CHANNELS];
 
 int actions_handler(int);
 
+// for parameters_handler
+    long param[12];                     // 12 integer parameters
+    char pvalue1[50];                   // char pvalue1
+    char pvalue2[50];                   // char pvalue2
+    char pvalue3[50];                   // char pvalue3
+    char pvalue4[50];                   // char pvalue4
+    char pvalue5[50];                   // char pvalue5
+    char pvalue6[50];                   // char pvalue6
+
+
 //          fill the array of sensor states need change by 1
 //          this check is for time in main loop
 //
@@ -1226,12 +1236,13 @@ int get_sensor_data (int conn_chann_id) {
     //          check what protocol is used
     //          now modbus
     if ( strcmp( sqlite3_column_text(res,0), "MODBUS_RTU" ) == 0 ) {
-        char buf1[100];
-        //strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
-        strcpy(buf1, MB_RTU_EXE);
-        //strcat(buf1, "");
+        //char buf1[100];
+        ////strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
+        //strcpy(buf1, MB_RTU_EXE);
+        ////strcat(buf1, "");
 
-        int status = system(buf1);
+        //int status = system(buf1);
+        int status = system(MB_RTU_EXE);
         if (NEED_FULL_LOG) print_time();
         if (NEED_FULL_LOG) fprintf(stdout, "%sModbus RTU executor exit code %d\n", THIS_FILE, status / 256);
 
@@ -1507,7 +1518,9 @@ int set_actuator (int conn_chann_id, int value) {
     sqlite3_stmt *res;
     char *sql;
     int ret_val;
-    char *log_msg, log_addr[100];
+    char *log_msg;
+    // it's for system log
+    //char log_addr[100];
 
     if (NEED_FULL_LOG) print_time();
     if (NEED_FULL_LOG) fprintf(stdout, "%slong time query started\n", THIS_FILE); 
@@ -1582,7 +1595,7 @@ int set_actuator (int conn_chann_id, int value) {
 
     //          story log_addr
     //
-    sprintf(log_addr, "protocol %s addr %s, channel addr %s, %s", sqlite3_column_text (res, 0), sqlite3_column_text(res, 5), sqlite3_column_text(res, 2), sqlite3_column_text(res, 1));
+    //sprintf(log_addr, "protocol %s addr %s, channel addr %s, %s", sqlite3_column_text (res, 0), sqlite3_column_text(res, 5), sqlite3_column_text(res, 2), sqlite3_column_text(res, 1));
 
     //sqlite3_finalize(res);
 
@@ -1593,12 +1606,13 @@ int set_actuator (int conn_chann_id, int value) {
     //          check what protocol is used
     //          and do work !!!
     if ( strcmp( sqlite3_column_text(res,0), "MODBUS_RTU" ) == 0 ) {
-        char buf1[100];
-        //strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
-        strcpy(buf1, MB_RTU_EXE);
-        //strcat(buf1, "");
+        //char buf1[100];
+        ////strcpy(buf1, "/home/root/leo/modbusrtu/rdmbrtuexe");
+        //strcpy(buf1, MB_RTU_EXE);
+        ////strcat(buf1, "");
 
-        int status = system(buf1);
+        //int status = system(buf1);
+        int status = system(MB_RTU_EXE);
         if (NEED_FULL_LOG) print_time();
         if (NEED_FULL_LOG) fprintf(stdout, "%sModbus RTU executor exit code %d\n", THIS_FILE, status / 256);
 
@@ -1695,14 +1709,16 @@ int set_actuator (int conn_chann_id, int value) {
     if (NEED_FULL_LOG) print_time();
     if (NEED_FULL_LOG) fprintf(stdout, "%sset_actuator() returned %d\n", THIS_FILE, ret_val); 
 
-    if ( ret_val >= 0 ) {
-        log_msg = malloc(160*sizeof(char));
-        sprintf(log_msg, "SET ACTUATOR %s to %d", log_addr, ret_val);
-        // TODO logger_er()
-        logger(log_msg);
-        free(log_msg);
+    // it's for system log
+    //if ( ret_val >= 0 ) {
+    //    log_msg = malloc(160*sizeof(char));
+    //    sprintf(log_msg, "SET ACTUATOR %s to %d", log_addr, ret_val);
+    //    // TODO logger_er()
+    //    logger(log_msg);
+    //    free(log_msg);
+    //
+    //}
 
-    }
     //          if state any actuator is changed - refresh sensors needed
     //          TODO think about this - how to glue sensor state and actuator
     //          they have different connchannelId
@@ -1911,13 +1927,13 @@ int parameters_handler (int actid, int operid/*, int act_is_once*/) {
     char *err_msg = 0;
     sqlite3_stmt *res, *res2;
     char *sql;
-    long param[12];                     // 12 integer parameters
-    char pvalue1[50];                   // char pvalue1
-    char pvalue2[50];                   // char pvalue2
-    char pvalue3[50];                   // char pvalue3
-    char pvalue4[50];                   // char pvalue4
-    char pvalue5[50];                   // char pvalue5
-    char pvalue6[50];                   // char pvalue6
+//    long param[12];                     // 12 integer parameters
+//    char pvalue1[50];                   // char pvalue1
+//    char pvalue2[50];                   // char pvalue2
+//    char pvalue3[50];                   // char pvalue3
+//    char pvalue4[50];                   // char pvalue4
+//    char pvalue5[50];                   // char pvalue5
+//    char pvalue6[50];                   // char pvalue6
     int ret_val;
     long rtc_intrval;                   // interval used in RTC handler (EveryMinute, Hourly, Daily, etc.)
     int tmp, tmp1, tmp2;
