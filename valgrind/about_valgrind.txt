@@ -1,0 +1,20 @@
+Использование инструмента для определения утечек памяти в приложении- valgrind:
+1. sudo apt install valgrind
+
+2. в Makefile включить опцию для сборки с отладочной информацией
+all: jexec
+
+jexec: jexec.o sqlite3.o
+	$(CC) -g -o $@ $^ -lpthread -lhiredis
+
+jexec.o:	jexec.c
+	$(CC) -g -c $< -lhiredis
+
+sqlite3.o:	sqlite3.c
+	$(CC) -g -c $< -DSQLITE_OMIT_LOAD_EXTENSION -lpthread
+
+clean:
+	rm -f sqlite3.o jexec.o jexec
+
+3. запустить приложение из valgrind
+valgrind -s --leak-check=yes ./jexec
