@@ -1002,6 +1002,9 @@ void db_act_once_add_and_exec (long connchannel_id, int val) {
         goto ActOnceAddDone;
     }
 
+    // freeing memory
+    sqlite3_free(err_msg);
+
     scenario_id = (long)sqlite3_last_insert_rowid(db);
 
     //      prepare query for write to Actions table
@@ -3701,14 +3704,13 @@ int main(int argc, char **argv) {
                 cc_once_val = atoi(cc_token);
                 //cc_once_val = atoi(cc_rest);
 
-                free(cc_string); //- runtime error on freeing - wrong pointer
-                //free(cc_token);
+                free(cc_string);
 
                 db_act_once_add_and_exec(cc_once_id, cc_once_val);
             }
         //} while (reply->type != REDIS_REPLY_NIL);
-	//
-	freeReplyObject(reply);
+
+        freeReplyObject(reply);
 
         //      now see redis list user_page_control_in_check
         //      to track sensor in active user page
