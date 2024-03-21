@@ -38,7 +38,7 @@
 #define DAY  86400
 #define WEEK 604800
 #define MONTH 86400*30
-#define MAIN_LOOP_DELAY 100000
+#define MAIN_LOOP_DELAY 300000
 #define DEFAULT_IP_ADDR "192.168.0.71\n"
 #define DEFAULT_IP_MASK "255.255.255.0\n"
 #define JEXEC_DB_FILE   "test.db"
@@ -3345,10 +3345,6 @@ int main(int argc, char **argv) {
     char *err;
 
     //          for splitting redis LIST into tokens
-    //char *cc_token;
-    //cc_token = malloc(sizeof(char) * 10);
-    //char *cc_string_rest;
-    //cc_string_rest = malloc(sizeof(char) * 20);
     long cc_once_id;
     int cc_once_val;
 
@@ -3615,9 +3611,9 @@ int main(int argc, char **argv) {
         sqlite3_finalize(res);
 
         // see http://www.sqlite.org/c3ref/db_status.html
-        if (NEED_FULL_LOG) sqlite3_db_status(db, SQLITE_DBSTATUS_CACHE_USED, &pCur, &pHiwtr, 0);
-        if (NEED_FULL_LOG) print_time();
-        if (NEED_FULL_LOG) fprintf(stdout, "%sSQLite cache used %d\n", THIS_FILE, pCur); 
+        sqlite3_db_status(db, SQLITE_DBSTATUS_CACHE_USED, &pCur, &pHiwtr, 0);
+        print_time();
+        fprintf(stdout, "%sSQLite cache used %d\n", THIS_FILE, pCur); 
 
         //if (NEED_FULL_LOG) sqlite3_db_status(db, SQLITE_DBSTATUS_CACHE_HIT, &pCur, &pHiwtr, 0);
         //if (NEED_FULL_LOG) print_time();
@@ -3682,33 +3678,27 @@ int main(int argc, char **argv) {
         }
 */
         //     new: once executed action with Redis LIST
+        reply = redisCommand(c,"RPOP once_exec_connchannels");
 
-        //do {
-            reply = redisCommand(c,"RPOP once_exec_connchannels");
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sRPOP once_exec_connchannels is %s\n", THIS_FILE, reply->str);
 
-            if (NEED_FULL_LOG) print_time();
-            if (NEED_FULL_LOG) fprintf(stdout, "%sRPOP once_exec_connchannels is %s\n", THIS_FILE, reply->str);
+        if ( reply->type != REDIS_REPLY_NIL ) {
+            char* cc_token;
+            char* cc_string = malloc(sizeof(char) * 20);
+            strcpy(cc_string, reply->str);
+            char* cc_rest = cc_string;
 
-            if ( reply->type != REDIS_REPLY_NIL ) {
-                // https://stackoverflow.com/questions/66180466/invalid-pointer-when-using-strtok-r
-                char* cc_token;
-                //cc_token = malloc(sizeof(char) * 10);
-                char* cc_string = malloc(sizeof(char) * 20);
-                strcpy(cc_string, reply->str);
-                char* cc_rest = cc_string;
+            cc_token = strtok_r(cc_rest, ":", &cc_rest);
+            cc_once_id = atol(cc_token);
 
-                cc_token = strtok_r(cc_rest, ":", &cc_rest);
-                cc_once_id = atol(cc_token);
+            cc_token = strtok_r(cc_rest, ":", &cc_rest);
+            cc_once_val = atoi(cc_token);
 
-                cc_token = strtok_r(cc_rest, ":", &cc_rest);
-                cc_once_val = atoi(cc_token);
-                //cc_once_val = atoi(cc_rest);
+            free(cc_string);
 
-                free(cc_string);
-
-                db_act_once_add_and_exec(cc_once_id, cc_once_val);
-            }
-        //} while (reply->type != REDIS_REPLY_NIL);
+            db_act_once_add_and_exec(cc_once_id, cc_once_val);
+        }
 
         freeReplyObject(reply);
 
