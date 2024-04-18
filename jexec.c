@@ -23,7 +23,7 @@
 // http://zetcode.com/db/sqlitec/
 
 #define VER "#v0.05# "
-#define THIS_FILE "jexe "
+#define THIS_FILE "jexe: "
 //TODO make define handler in NEED_FULL_LOG
 #define NEED_FULL_LOG 0
 #define MAX_DEL_RECORDS  100
@@ -241,12 +241,14 @@ void logger (char *msg) {
 int command_stack_pop() {
     int num;
     if (ps.top == - 1) {
-        printf ("Command stack is empty\n");
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sCommand stack is empty!\n", THIS_FILE);
         return (ps.top);
     }
     else {
         num = ps.stk[ps.top];
-        printf ("Poped element of program stack = %d\n", ps.stk[ps.top]);
+        if (NEED_FULL_LOG) print_time();
+        if (NEED_FULL_LOG) fprintf(stdout, "%sPoped element of program stack = %d\n", THIS_FILE, ps.stk[ps.top]);
         ps.top = ps.top - 1;
     }
     return(num);
@@ -1195,9 +1197,9 @@ int get_sensor_data (int conn_chann_id) {
     //printf("step = %d\n", step);
     if (step == SQLITE_ROW) {
         if (NEED_FULL_LOG) print_time();
-        fprintf(stdout, "SENSOR information: ");
+        if (NEED_FULL_LOG) fprintf(stdout, "SENSOR information: ");
         for (j = 0; j < sqlite3_column_count(res); j++) {
-            fprintf(stdout, "%s: %s|", sqlite3_column_name(res,j), sqlite3_column_text(res, j)); 
+            if (NEED_FULL_LOG) fprintf(stdout, "%s: %s|", sqlite3_column_name(res,j), sqlite3_column_text(res, j)); 
             //  Set a REDIS keys 
             if ( sqlite3_column_text(res, j) )
                 reply = redisCommand(c,"SET %s %s", sqlite3_column_name(res,j), sqlite3_column_text(res, j));
@@ -1566,9 +1568,9 @@ int set_actuator (int conn_chann_id, int value) {
     int step = sqlite3_step(res);
     if (step == SQLITE_ROW) {
         if (NEED_FULL_LOG) print_time();
-        fprintf(stdout, "ACTUATOR information: ");
+        if (NEED_FULL_LOG) fprintf(stdout, "ACTUATOR information: ");
         for (j = 0; j < sqlite3_column_count(res); j++) {
-            printf("%s: %s|", sqlite3_column_name(res,j), sqlite3_column_text(res, j)); 
+            if (NEED_FULL_LOG) printf("%s: %s|", sqlite3_column_name(res,j), sqlite3_column_text(res, j)); 
             // Set a REDIS keys 
             reply = redisCommand(c,"SET %s %s", sqlite3_column_name(res,j), sqlite3_column_text(res, j));
             //printf("SET: %s\n", reply->str);
@@ -2303,8 +2305,8 @@ int parameters_handler (int actid, int operid/*, int act_is_once*/) {
                 // new formula of RTC check
                 if ( (long)(timenow - param[0]) >= 0 && (long)((timenow - param[0]) % rtc_intrval ) < (long)(start_main_cycle_time - timenow + MAIN_LOOP_DELAY/1000000 + main_cycle_time + param[6] + 1) ) { 
                 //if ( (long)(ltime() - param[0]) >= 0 && (long)((ltime() - param[0]) % rtc_intrval ) < main_cycle_time ) { 
-                    if (NEED_FULL_LOG) print_time();
-                    fprintf (stdout, "%sEveryMinute, Hourly and other event - OK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n", THIS_FILE);
+                    print_time();
+                    fprintf (stdout, "%sEveryMinute, Hourly and other event is happend!!!!!!!!!\n", THIS_FILE);
                     // checking of RTC target type here
                     // if CALL subroutine - last command nStr to stack
                     if ( strcmp (pvalue2, "Call") == 0 ) {
@@ -2370,8 +2372,8 @@ int parameters_handler (int actid, int operid/*, int act_is_once*/) {
                 if( (ltime() - param[1]) > rtc_intrval || (ltime() > param[1] && ltime() < param[1] + param[6]) ) { 
 
                     if ( (ltime() - param[0]) > 0 ) {
-                        if (NEED_FULL_LOG) print_time();
-                        fprintf (stdout, "%sEveryMinute, Hourly and other event - OK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n", THIS_FILE);
+                        print_time();
+                        fprintf (stdout, "%sEveryMinute, Hourly and other event is happend!!!!!!!!!\n", THIS_FILE);
                         // checking of RTC target type here
                         // if CALL subroutine - last command nStr to stack
                         if ( strcmp (pvalue2, "Call") == 0 ) {
@@ -3759,7 +3761,8 @@ int main(int argc, char **argv) {
             // in redis SET or list storied all controls in user WEB-page who wait UI change event
             // loop all of it
             for (i = 0; i < reply->elements; i++ ) {
-                printf( "ConnchannelId: %s\n", reply->element[i]->str );
+                print_time();
+                fprintf (stdout, "%sget information about channel with ConnchannelId: %s\n", THIS_FILE, reply->element[i]->str );
 
                 int connchann = (int)strtod(reply->element[i]->str, &err);
                 // read data (in connchannelId present all info)
@@ -4002,7 +4005,7 @@ EndExeLoop:
         //      place to say - "need poll sensors"
         //      now it's once in 2 main loops
         //
-        if ( even_or_odd ) {
+        /*if ( even_or_odd )*/ {
             fill_sensor_state_changes_ones();
             if (NEED_FULL_LOG) print_time();
             if (NEED_FULL_LOG) fprintf(stdout, "%sAll sensor_state_is_need_to_check[] is set to 1!\n", THIS_FILE);
