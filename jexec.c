@@ -3377,10 +3377,10 @@ int main(int argc, char **argv) {
     c = redisConnectWithTimeout(hostname, port, timeout);
     if (c == NULL || c->err) {
         if (c) {
-            printf("Connection error: %s\n", c->errstr);
+            printf("Redis connection error: %s\n", c->errstr);
             redisFree(c);
         } else {
-            printf("Connection error: can't allocate redis context\n");
+            printf("Redis connection error: can't allocate redis context\n");
         }
         exit(1);
     }
